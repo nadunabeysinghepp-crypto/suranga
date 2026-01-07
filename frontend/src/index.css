@@ -1,0 +1,16 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: white;
+  color: #0f172a; /* slate-900 */
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+
+.container-pad {
+  max-width: 72rem; /* ~ max-w-6xl */
+  margin: 0 auto;
+  padding: 0 1rem; /* px-4 */
+}
