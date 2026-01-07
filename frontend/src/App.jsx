@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { HashRouter as Router } from "react-router-dom";
+// ✅ frontend/src/App.jsx
+import { HashRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -22,7 +22,7 @@ import ServicesAdmin from "./admin/ServicesAdmin";
 import DeliveryAdmin from "./admin/DeliveryAdmin";
 import PortfolioAdmin from "./admin/PortfolioAdmin";
 import ReviewsAdmin from "./admin/ReviewsAdmin";
-import SettingsAdmin from "./admin/SettingsAdmin"; // ✅ NEW
+import SettingsAdmin from "./admin/SettingsAdmin";
 
 function PublicLayout() {
   return (
@@ -46,9 +46,9 @@ function PublicLayout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
-        {/* ADMIN */}
+        {/* ✅ ADMIN */}
         <Route path="/admin/login" element={<Login />} />
 
         <Route
@@ -65,12 +65,12 @@ export default function App() {
           <Route path="delivery" element={<DeliveryAdmin />} />
           <Route path="portfolio" element={<PortfolioAdmin />} />
           <Route path="reviews" element={<ReviewsAdmin />} />
-          <Route path="settings" element={<SettingsAdmin />} /> {/* ✅ NEW */}
+          <Route path="settings" element={<SettingsAdmin />} />
         </Route>
 
-        {/* PUBLIC (everything else) */}
+        {/* ✅ PUBLIC */}
         <Route path="/*" element={<PublicLayout />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
