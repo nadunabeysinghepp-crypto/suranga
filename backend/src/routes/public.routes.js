@@ -1,30 +1,40 @@
 const router = require("express").Router();
 const { uploadQuoteFiles } = require("../middleware/upload");
 const c = require("../controllers/public.controller");
-const publicController = require("../controllers/public.controller");
 
-// services
+// --------------------
+// Services
+// --------------------
 router.get("/services", c.getServices);
 
-// delivery areas
+// --------------------
+// Delivery areas
+// --------------------
 router.get("/delivery-areas", c.getDeliveryAreas);
 
-// quotes (allow up to 5 attachments, field name: "files")
+// --------------------
+// Quotes (max 5 files)
+// --------------------
 router.post(
   "/quotes",
   uploadQuoteFiles.array("files", 5),
   c.createQuote
 );
 
-// reviews
+// --------------------
+// Reviews
+// --------------------
 router.get("/reviews", c.getReviews);
 router.post("/reviews", c.createReview);
 
-// portfolio
+// --------------------
+// Portfolio
+// --------------------
 router.get("/portfolio", c.getPortfolio);
 
-// settings
-router.get("/settings", publicController.getPublicSettings);
-
+// --------------------
+// Public settings
+// --------------------
+router.get("/settings", c.getPublicSettings);
 
 module.exports = router;
