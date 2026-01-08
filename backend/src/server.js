@@ -31,46 +31,40 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(...urls);
 }
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      // Check if origin is in allowed list
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      // ALLOW ALL NETLIFY PREVIEW URLs (pattern matching)
-      // This matches: https://{hash}--{sitename}.netlify.app
-      const netlifyPreviewPattern = /^https:\/\/([a-f0-9]+)--surangaprinters\.netlify\.app$/;
-      const netlifySingularPattern = /^https:\/\/([a-f0-9]+)--singular-stroopwafel-854996\.netlify\.app$/;
-      
-      if (netlifyPreviewPattern.test(origin) || netlifySingularPattern.test(origin)) {
-        console.log("✅ Allowed Netlify preview:", origin);
-        return callback(null, true);
-      }
+    // ALLOW ALL NETLIFY PREVIEW URLs (pattern matching)
+    // This matches: https://{hash}--{sitename}.netlify.app
+    const netlifyPreviewPattern = /^https:\/\/([a-f0-9]+)--surangaprinters\.netlify\.app$/;
+    const netlifySingularPattern = /^https:\/\/([a-f0-9]+)--singular-stroopwafel-854996\.netlify\.app$/;
+    
+    if (netlifyPreviewPattern.test(origin) || netlifySingularPattern.test(origin)) {
+      console.log("✅ Allowed Netlify preview:", origin);
+      return callback(null, true);
+    }
 
-      // Allow any subdomain of netlify.app for development
-      // BE CAREFUL: This is less secure for production
-      // if (origin.endsWith('.netlify.app')) {
-      //   console.log("🌐 Allowed Netlify domain:", origin);
-      //   return callback(null, true);
-      // }
+    console.warn("❌ CORS blocked origin:", origin);
+    return callback(new Error('Not allowed by CORS'), false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  maxAge: 86400, // 24 hours - for preflight cache
+};
 
-      console.warn("❌ CORS blocked origin:", origin);
-      return callback(new Error('Not allowed by CORS'), false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    exposedHeaders: ["Content-Range", "X-Content-Range"],
-    maxAge: 86400, // 24 hours - for preflight cache
-  })
-);
+// Apply CORS middleware globally
+app.use(cors(corsOptions));
 
 /* ======================================================
    GLOBAL MIDDLEWARE
@@ -79,8 +73,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(morgan("dev"));
 
-// Handle preflight requests
-app.options('*', cors());
+// Handle preflight requests explicitly (FIXED - removed '*')
+app.options("/api/*", cors(corsOptions)); // Route-specific
+app.options("/uploads/*", cors(corsOptions)); // Route-specific
 
 /* ======================================================
    STATIC FILES
@@ -97,7 +92,6 @@ app.get("/__debug", (req, res) => {
     allowedOrigins,
     env: process.env.NODE_ENV || "development",
     timestamp: new Date().toISOString(),
-    headers: req.headers,
   });
 });
 
