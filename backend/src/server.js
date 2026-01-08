@@ -15,40 +15,35 @@ const adminRoutes = require("./routes/admin.routes");
 
 const app = express();
 
-/* -------------------- CORS (FIXED FOR NETLIFY + JWT) --------------------
-   ✅ Allows your Netlify frontend domains
-   ✅ Handles preflight (OPTIONS) properly
-   ✅ Allows Authorization header (needed for admin)
-------------------------------------------------------------------------- */
+/* -------------------- CORS (FIXED) --------------------
+   ✅ Uses SAME config for normal + preflight requests
+-------------------------------------------------------- */
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-
-  // ✅ Your Netlify domains
   "https://surangaprinters.netlify.app",
   "https://singular-stroopwafel-854996.netlify.app",
 ];
 
-// Optional override from Render env
 if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL.trim());
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      // Postman/curl have no origin
-      if (!origin) return cb(null, true);
+const corsOptions = {
+  origin: (origin, cb) => {
+    // allow requests with no origin (Postman/curl/server-to-server)
+    if (!origin) return cb(null, true);
 
-      if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
 
-      return cb(new Error(`CORS blocked: ${origin}`), false);
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+    return cb(new Error(`CORS blocked: ${origin}`), false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// ✅ Ensure preflight always returns properly
-app.options("*", cors());
+app.use(cors(corsOptions));
+
+// ✅ IMPORTANT: preflight must use the SAME corsOptions
+app.options("*", cors(corsOptions));
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(express.json({ limit: "10mb" }));
@@ -57,6 +52,15 @@ app.use(morgan("dev"));
 
 /* -------------------- STATIC UPLOADS -------------------- */
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+/* -------------------- DEBUG (to confirm deploy) -------------------- */
+app.get("/__debug", (req, res) => {
+  res.json({
+    ok: true,
+    origin: req.headers.origin || null,
+    allowedOrigins,
+  });
+});
 
 /* -------------------- ROUTES -------------------- */
 app.use("/api", publicRoutes);
@@ -74,7 +78,7 @@ app.use((req, res) => {
 
 /* -------------------- ERROR HANDLER -------------------- */
 app.use((err, req, res, next) => {
-  console.error("❌ Error:", err);
+  console.error("❌ Error:", err.message || err);
   res.status(500).json({ message: err.message || "Server error" });
 });
 
