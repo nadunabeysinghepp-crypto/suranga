@@ -16,7 +16,7 @@ const adminRoutes = require("./routes/admin.routes");
 const app = express();
 
 /* ======================================================
-   CORS CONFIG (FINAL – NETLIFY + RENDER SAFE)
+   CORS CONFIG (FINAL – FIXED, NO CRASH)
 ====================================================== */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -40,7 +40,6 @@ app.use(
       }
 
       console.warn("❌ CORS blocked origin:", origin);
-      // ❗ DO NOT throw error – just block
       return callback(null, false);
     },
     credentials: true,
@@ -49,8 +48,8 @@ app.use(
   })
 );
 
-// 🔥 REQUIRED FOR PREFLIGHT
-app.options("*", cors());
+// ✅ FIXED: valid wildcard (NO "*")
+app.options("/*", cors());
 
 /* ======================================================
    GLOBAL MIDDLEWARE
