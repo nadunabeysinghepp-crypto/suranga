@@ -1,4 +1,4 @@
-// backend/server.js
+// backend/src/server.js
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
@@ -17,17 +17,30 @@ const app = express();
 
 /* -------------------- CORS (UPDATED) --------------------
    ✅ Allows Netlify frontend + local dev
-   ✅ You can override using FRONTEND_URL in Render env
+   ✅ Supports multiple domains (both your Netlify URLs)
+   ✅ Optional: FRONTEND_URL or FRONTEND_URLS env (comma-separated)
 --------------------------------------------------------- */
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
+
+  // ✅ Your Netlify sites (IMPORTANT)
+  "https://surangaprinters.netlify.app",
   "https://singular-stroopwafel-854996.netlify.app",
 ];
 
-// Optional: allow setting a custom frontend domain from env
+// Optional: allow setting custom domains from env (Render)
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
+  allowedOrigins.push(process.env.FRONTEND_URL.trim());
+}
+
+// Optional: allow multiple env domains comma-separated
+// Example in Render: FRONTEND_URLS=https://surangaprinters.netlify.app,https://www.yourdomain.com
+if (process.env.FRONTEND_URLS) {
+  process.env.FRONTEND_URLS.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .forEach((u) => allowedOrigins.push(u));
 }
 
 app.use(
@@ -41,8 +54,13 @@ app.use(
       return cb(new Error(`CORS blocked: ${origin}`), false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Helpful for preflight in some environments
+app.options("*", cors());
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(express.json({ limit: "10mb" }));
@@ -77,9 +95,7 @@ async function ensureAdmin() {
   const pass = process.env.ADMIN_PASSWORD || "";
 
   if (!email || !pass) {
-    console.log(
-      "⚠️ ADMIN_EMAIL / ADMIN_PASSWORD not set. Skipping admin creation."
-    );
+    console.log("⚠️ ADMIN_EMAIL / ADMIN_PASSWORD not set. Skipping admin creation.");
     return;
   }
 
@@ -111,7 +127,6 @@ async function start() {
     await seedServices();
     console.log("✅ Services seeded (if needed)");
 
-    // ✅ Render provides PORT automatically
     const port = process.env.PORT || 5000;
     app.listen(port, () => {
       console.log(`✅ API running on port ${port}`);
