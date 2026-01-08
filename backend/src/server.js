@@ -16,7 +16,7 @@ const adminRoutes = require("./routes/admin.routes");
 const app = express();
 
 /* ======================================================
-   CORS CONFIG (SAFE FOR LOCAL + NETLIFY + RENDER)
+   CORS CONFIG (FINAL – NETLIFY + RENDER SAFE)
 ====================================================== */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -25,28 +25,32 @@ const allowedOrigins = [
   "https://singular-stroopwafel-854996.netlify.app",
 ];
 
-// allow dynamic frontend URL (Render env var)
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL.trim());
 }
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // allow Postman / curl / server-to-server
-    if (!origin) return callback(null, true);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow Postman, curl, Render health checks
+      if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-    return callback(new Error(`CORS blocked: ${origin}`));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+      console.warn("❌ CORS blocked origin:", origin);
+      // ❗ DO NOT throw error – just block
+      return callback(null, false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use(cors(corsOptions));
+// 🔥 REQUIRED FOR PREFLIGHT
+app.options("*", cors());
 
 /* ======================================================
    GLOBAL MIDDLEWARE
@@ -56,12 +60,12 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(morgan("dev"));
 
 /* ======================================================
-   STATIC FILES (UPLOADS)
+   STATIC FILES
 ====================================================== */
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 /* ======================================================
-   DEBUG ROUTE (SAFE TO KEEP)
+   DEBUG ROUTE
 ====================================================== */
 app.get("/__debug", (req, res) => {
   res.json({
@@ -73,13 +77,13 @@ app.get("/__debug", (req, res) => {
 });
 
 /* ======================================================
-   API ROUTES
+   ROUTES
 ====================================================== */
 app.use("/api", publicRoutes);
 app.use("/api/admin", adminRoutes);
 
 /* ======================================================
-   HEALTH CHECK (RENDER USES THIS)
+   HEALTH CHECK
 ====================================================== */
 app.get("/", (req, res) => {
   res.json({ status: "Backend running OK 🚀" });
@@ -131,7 +135,7 @@ async function ensureAdmin() {
 }
 
 /* ======================================================
-   START SERVER (RENDER COMPATIBLE)
+   START SERVER
 ====================================================== */
 async function startServer() {
   try {
