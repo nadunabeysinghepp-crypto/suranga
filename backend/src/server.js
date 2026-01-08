@@ -16,7 +16,7 @@ const adminRoutes = require("./routes/admin.routes");
 const app = express();
 
 /* ======================================================
-   CORS CONFIG (FINAL – FIXED, NO CRASH)
+   CORS CONFIG (FINAL – EXPRESS 5 SAFE)
 ====================================================== */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -32,7 +32,7 @@ if (process.env.FRONTEND_URL) {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow Postman, curl, Render health checks
+      // allow Postman, curl, Render health checks
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -47,9 +47,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// ✅ FIXED: valid wildcard (NO "*")
-app.options("/*", cors());
 
 /* ======================================================
    GLOBAL MIDDLEWARE
