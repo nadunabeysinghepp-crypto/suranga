@@ -1,16 +1,19 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+  "http://localhost:5000";
 
 export async function api(path, options = {}) {
-  if (!path) {
-    throw new Error("❌ API path is required");
-  }
+  if (!path) throw new Error("API path is required");
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const safePath = path.startsWith("/") ? path : `/${path}`;
+
+  const res = await fetch(`${BASE_URL}${safePath}`, {
+    method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
-    ...options,
+    body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
   if (!res.ok) {
