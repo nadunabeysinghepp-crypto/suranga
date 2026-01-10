@@ -302,7 +302,7 @@
 // }
 import { useEffect, useMemo, useState } from "react";
 import http from "../api/adminHttp";
-import API_BASE from "../lib/apiBase";
+import { api } from "../lib/apiBase";
 import { Link } from "react-router-dom";
 
 export default function Portfolio() {

@@ -1,19 +1,23 @@
-const BASE_URL =
+// src/lib/apiBase.js
+
+const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
   "http://localhost:5000";
 
+/**
+ * Generic API helper
+ */
 export async function api(path, options = {}) {
-  if (!path) throw new Error("API path is required");
+  if (!path) {
+    throw new Error("API path is required");
+  }
 
-  const safePath = path.startsWith("/") ? path : `/${path}`;
-
-  const res = await fetch(`${BASE_URL}${safePath}`, {
-    method: options.method || "GET",
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    ...options,
   });
 
   if (!res.ok) {
@@ -23,3 +27,8 @@ export async function api(path, options = {}) {
 
   return res.json();
 }
+
+/**
+ * ✅ DEFAULT EXPORT (THIS FIXES YOUR BUILD)
+ */
+export default API_BASE;
