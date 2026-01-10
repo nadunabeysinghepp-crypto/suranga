@@ -27,14 +27,14 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
         working-directory: frontend
+        run: npm install
 
       - name: Build
-        run: node node_modules/rolldown-vite/bin/vite.js build
         working-directory: frontend
+        run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
@@ -45,7 +45,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy
         id: deployment
