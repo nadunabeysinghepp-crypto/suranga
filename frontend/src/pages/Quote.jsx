@@ -10,6 +10,48 @@ import {
 const PHONE = "0662285425";
 const WHATSAPP = "94772285425";
 
+// Common options that will always be available
+const COMMON_PAPER_TYPES = [
+  "Glossy",
+  "Matte",
+  "Bond Paper",
+  "Recycled",
+  "Cardstock",
+  "Photo Paper",
+  "Transparency",
+  "Vinyl",
+  "Other"
+];
+
+const COMMON_COLOR_OPTIONS = [
+  "Full Color",
+  "Black & White",
+  "Grayscale",
+  "Spot Color",
+  "Pantone Colors",
+  "CMYK",
+  "RGB"
+];
+
+const COMMON_FINISHING_OPTIONS = [
+  "Lamination",
+  "UV Coating",
+  "Gloss Finish",
+  "Matte Finish",
+  "Spot UV",
+  "Embossing",
+  "Debossing",
+  "Foil Stamping",
+  "Die Cutting",
+  "Perfect Binding",
+  "Saddle Stitch",
+  "Wire-O Binding",
+  "Corner Rounding",
+  "Folding",
+  "Numbering",
+  "Perforation"
+];
+
 export default function Quote() {
   const [services, setServices] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -57,16 +99,16 @@ export default function Quote() {
         setServices(servicesData);
         setAreas(areasData);
 
-        // Create service details map
+        // Create service details map with proper fallbacks
         const detailsMap = {};
         servicesData.forEach(service => {
           detailsMap[service.name] = {
-            description: service.description,
-            typicalTurnaround: service.typicalTurnaround,
-            minQuantity: service.minQuantity,
-            popularSizes: service.popularSizes || [],
-            availablePapers: service.availablePapers || [],
-            availableFinishing: service.availableFinishing || []
+            description: service.description || `${service.name} printing service`,
+            typicalTurnaround: service.typicalTurnaround || "3-5 business days",
+            minQuantity: service.minQuantity || 1,
+            popularSizes: service.popularSizes || ["A4 (210x297mm)", "A3 (297x420mm)", "Letter (8.5x11in)"],
+            availablePapers: service.availablePapers || COMMON_PAPER_TYPES,
+            availableFinishing: service.availableFinishing || COMMON_FINISHING_OPTIONS
           };
         });
         setServiceDetails(detailsMap);
@@ -374,31 +416,46 @@ export default function Quote() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input 
-                  label="Color" 
-                  value={color} 
+                <EnhancedSelect
+                  label="Color Options"
+                  value={color}
                   onChange={setColor}
-                  placeholder="e.g., Full Color, B&W, Spot Color"
+                  options={COMMON_COLOR_OPTIONS}
+                  placeholder="Select color option"
                   icon={<FaPalette className="text-gray-400" />}
+                  allowCustom={true}
                 />
                 
-                <Select
+                <EnhancedSelect
                   label="Paper Type"
                   value={paper}
                   onChange={setPaper}
-                  options={['', ...(currentServiceDetails.availablePapers || []), 'Other']}
+                  options={currentServiceDetails.availablePapers || COMMON_PAPER_TYPES}
                   placeholder="Select paper type"
+                  icon={<FaPrint className="text-gray-400" />}
+                  allowCustom={true}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Select
+                <EnhancedSelect
                   label="Finishing Options"
                   value={finishing}
                   onChange={setFinishing}
-                  options={['', ...(currentServiceDetails.availableFinishing || []), 'Custom']}
-                  placeholder="Select finishing"
+                  options={currentServiceDetails.availableFinishing || COMMON_FINISHING_OPTIONS}
+                  placeholder="Select finishing option"
+                  icon={<FaPalette className="text-gray-400" />}
+                  allowCustom={true}
                 />
+                
+                <div className="space-y-4">
+                  <label className="block font-semibold text-gray-700">
+                    Need help selecting?
+                  </label>
+                  <p className="text-sm text-gray-600">
+                    Not sure about paper or finishing options? Leave blank and our team will recommend the best options for your project.
+                  </p>
+                </div>
               </div>
             </div>
           </Section>
@@ -612,19 +669,19 @@ export default function Quote() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-bold text-lg">Contact Info</h3>
+                  <h3 className="font-bold text-lg">Print Specifications</h3>
                   <div className="space-y-2">
                     <p className="flex justify-between">
-                      <span className="text-gray-600">Name:</span>
-                      <span className="font-semibold">{customerName || '—'}</span>
+                      <span className="text-gray-600">Color:</span>
+                      <span className="font-semibold">{color || 'Not specified'}</span>
                     </p>
                     <p className="flex justify-between">
-                      <span className="text-gray-600">Phone:</span>
-                      <span className="font-semibold">{phone || '—'}</span>
+                      <span className="text-gray-600">Paper:</span>
+                      <span className="font-semibold">{paper || 'Not specified'}</span>
                     </p>
                     <p className="flex justify-between">
-                      <span className="text-gray-600">Contact via:</span>
-                      <span className="font-semibold">{contactMethod}</span>
+                      <span className="text-gray-600">Finishing:</span>
+                      <span className="font-semibold">{finishing || 'Not specified'}</span>
                     </p>
                   </div>
                 </div>
@@ -703,7 +760,118 @@ export default function Quote() {
   );
 }
 
-/* ------------------ ENHANCED COMPONENTS ------------------ */
+/* ------------------ ENHANCED SELECT COMPONENT ------------------ */
+function EnhancedSelect({ 
+  label, 
+  value, 
+  onChange, 
+  options, 
+  placeholder = "Select an option",
+  icon,
+  allowCustom = false
+}) {
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+
+  const handleSelectChange = (e) => {
+    const selectedValue = e.target.value;
+    
+    if (selectedValue === "custom" && allowCustom) {
+      setShowCustomInput(true);
+      setCustomValue(value || "");
+    } else if (selectedValue === "") {
+      onChange("");
+      setShowCustomInput(false);
+    } else {
+      onChange(selectedValue);
+      setShowCustomInput(false);
+    }
+  };
+
+  const handleCustomSubmit = () => {
+    if (customValue.trim()) {
+      onChange(customValue.trim());
+      setShowCustomInput(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block font-semibold mb-2 text-gray-700">{label}</label>
+      
+      {!showCustomInput ? (
+        <div className="relative">
+          {icon && (
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+              {icon}
+            </div>
+          )}
+          <select
+            className={`w-full border-2 border-gray-200 rounded-xl p-3 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all appearance-none bg-white ${
+              icon ? 'pl-12' : ''
+            }`}
+            value={value}
+            onChange={handleSelectChange}
+          >
+            <option value="">{placeholder}</option>
+            {options.map((o, index) => (
+              <option key={index} value={o}>{o}</option>
+            ))}
+            {allowCustom && <option value="custom">Custom / Other...</option>}
+          </select>
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            {icon && (
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                {icon}
+              </div>
+            )}
+            <input
+              type="text"
+              className={`w-full border-2 border-red-500 rounded-xl p-3 focus:ring-2 focus:ring-red-200 transition-all ${
+                icon ? 'pl-12' : ''
+              }`}
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              placeholder="Enter custom value"
+              autoFocus
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleCustomSubmit}
+            className="px-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+          >
+            OK
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCustomInput(false);
+              onChange("");
+            }}
+            className="px-4 border-2 border-gray-300 rounded-xl hover:border-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+      
+      {options.length === 0 && (
+        <p className="text-sm text-gray-500 mt-1">Loading options...</p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------ REUSABLE COMPONENTS ------------------ */
 function Section({ title, icon, description, children }) {
   return (
     <div className="space-y-6 border rounded-2xl p-8 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -758,7 +926,7 @@ function Input({
           placeholder={placeholder}
           min={min}
           step={step}
-          onFocus={() => setShowSuggestions(true)}
+          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         />
         {suggestions.length > 0 && showSuggestions && (
@@ -811,8 +979,8 @@ function Select({
           onChange={e => onChange(e.target.value)}
         >
           <option value="">{placeholder}</option>
-          {options.map(o => (
-            <option key={o} value={o}>{o}</option>
+          {options.map((o, index) => (
+            <option key={index} value={o}>{o}</option>
           ))}
         </select>
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
