@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import http from "../api/adminHttp";
-import { API_BASE } from "../lib/apiBase";
+import API_BASE from "../lib/apiBase";
 
 export default function Portfolio() {
   const [items, setItems] = useState([]);
