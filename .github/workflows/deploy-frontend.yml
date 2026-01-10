@@ -31,7 +31,7 @@ jobs:
         working-directory: frontend
 
       - name: Build
-        run: npx vite build
+        run: node node_modules/rolldown-vite/bin/vite.js build
         working-directory: frontend
 
       - name: Upload Pages artifact
@@ -40,13 +40,13 @@ jobs:
           path: frontend/dist
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
 
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
